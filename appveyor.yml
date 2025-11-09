@@ -5,23 +5,27 @@ environment:
   ANDROID_HOME: /home/appveyor/android-sdk
 
 install:
-  - sudo apt-get update
-  - sudo apt-get install -y openjdk-11-jdk wget unzip
+  - sudo apt-get update -qq
+  - sudo apt-get install -y openjdk-17-jdk wget unzip
+  # Download Android cmdline tools
   - wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
   - unzip -q commandlinetools-linux-9477386_latest.zip
   - mkdir -p $ANDROID_HOME/cmdline-tools
   - mv cmdline-tools $ANDROID_HOME/cmdline-tools/latest
   - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "platform-tools"
-  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-33"
-  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "build-tools;33.0.0"
-  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
+  # Install SDK components
+  - yes | sdkmanager --sdk_root=$ANDROID_HOME "platform-tools"
+  - yes | sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-34"
+  - yes | sdkmanager --sdk_root=$ANDROID_HOME "build-tools;34.0.0"
+  - yes | sdkmanager --sdk_root=$ANDROID_HOME --licenses
+  # Gradle wrapper check
+  - if [ ! -f gradlew ]; then gradle wrapper --gradle-version 8.7; fi
   - echo "sdk.dir=$ANDROID_HOME" > local.properties
 
 build_script:
   - chmod +x gradlew
   - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
-  - ./gradlew assembleDebug --no-daemon --stacktrace
+  - ./gradlew clean assembleDebug --no-daemon --stacktrace
 
 artifacts:
   - path: app/build/outputs/apk/debug/*.apk
