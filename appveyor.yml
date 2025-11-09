@@ -2,22 +2,31 @@ version: 1.0.{build}
 image: Ubuntu2004
 
 environment:
-  ANDROID_HOME: /usr/local/android-sdk
+  ANDROID_HOME: /home/appveyor/android-sdk
 
 install:
   - sudo apt-get update
-  - sudo apt-get install -y openjdk-11-jdk
+  - sudo apt-get install -y openjdk-11-jdk wget unzip
   - wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
   - unzip -q commandlinetools-linux-9477386_latest.zip
   - mkdir -p $ANDROID_HOME/cmdline-tools
   - mv cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-  - $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
+  - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "platform-tools"
+  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-33"
+  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "build-tools;33.0.0"
+  - yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME --licenses
   - echo "sdk.dir=$ANDROID_HOME" > local.properties
 
 build_script:
   - chmod +x gradlew
-  - ./gradlew assembleDebug
+  - export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH
+  - ./gradlew assembleDebug --no-daemon --stacktrace
 
 artifacts:
   - path: app/build/outputs/apk/debug/*.apk
-    name: APK
+    name: StarLauncher-APK
+
+cache:
+  - /home/appveyor/android-sdk
+  - /home/appveyor/.gradle
